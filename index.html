@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ANALOG NOSTALGIA</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+
+/* ─── RESET ─── */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --amber:       #f5a623;
+  --amber-light: #ffd580;
+  --amber-dark:  #9a6200;
+  --amber-glow:  rgba(245,166,35,0.35);
+  --bg:          #080604;
+  --screen-bg:   #100d08;
+  --px:          'Press Start 2P', monospace;
+}
+
+body {
+  background: #000;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ─── MAIN SCREEN ─── */
+#main-screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+#main-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* scanline veil over main screen */
+#main-screen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 2px,
+    rgba(0,0,0,0.13) 2px,
+    rgba(0,0,0,0.13) 4px
+  );
+  pointer-events: none;
+}
+
+/* ─── GALLERY TRIGGER BUTTON ─── */
+#gallery-btn {
+  position: absolute;
+  bottom: 7%;
+  right: 5%;
+  z-index: 10;
+  background: var(--bg);
+  color: var(--amber);
+  font-family: var(--px);
+  font-size: 7px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 12px 16px 10px;
+  cursor: pointer;
+  border: 2px solid var(--amber);
+  border-top-color: var(--amber-light);
+  border-left-color: var(--amber-light);
+  border-bottom-color: var(--amber-dark);
+  border-right-color: var(--amber-dark);
+  box-shadow:
+    2px 2px 0 0 var(--amber-dark),
+    0 0 18px var(--amber-glow);
+  line-height: 1;
+  text-align: center;
+  transition: box-shadow 0.06s;
+}
+#gallery-btn .g-icon {
+  display: block;
+  font-size: 26px;
+  margin-bottom: 7px;
+  filter: sepia(1) saturate(4) hue-rotate(5deg) brightness(1.1);
+  image-rendering: pixelated;
+}
+#gallery-btn:hover {
+  box-shadow:
+    2px 2px 0 0 var(--amber-dark),
+    0 0 32px var(--amber-glow),
+    0 0 8px var(--amber);
+}
+#gallery-btn:active {
+  border-top-color: var(--amber-dark);
+  border-left-color: var(--amber-dark);
+  border-bottom-color: var(--amber-light);
+  border-right-color: var(--amber-light);
+  transform: translate(2px,2px);
+  box-shadow: none;
+}
+
+/* ─── MODAL BACKDROP ─── */
+#modal-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.82);
+  z-index: 50;
+  align-items: center;
+  justify-content: center;
+  animation: backdropIn 0.15s ease;
+}
+#modal-backdrop.open {
+  display: flex;
+}
+@keyframes backdropIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ─── PAGER WINDOW ─── */
+#pager-window {
+  position: relative;
+  background: var(--bg);
+  /* Stepped pixel border */
+  border: 3px solid var(--amber);
+  box-shadow:
+    0 0 0 3px var(--bg),
+    0 0 0 6px var(--amber-dark),
+    6px 6px 0 6px var(--bg),
+    12px 12px 0 6px var(--amber-dark),
+    0 0 60px rgba(245,166,35,0.25);
+  image-rendering: pixelated;
+  max-width: 90vw;
+  max-height: 95vh;
+  animation: windowIn 0.12s steps(4) forwards;
+}
+@keyframes windowIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+/* ─── TITLE BAR ─── */
+#title-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--amber);
+  color: var(--bg);
+  padding: 5px 8px;
+  font-family: var(--px);
+  font-size: 7px;
+  letter-spacing: 2px;
+  user-select: none;
+}
+.title-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.px-dots {
+  display: flex;
+  gap: 3px;
+}
+.px-dot {
+  width: 7px;
+  height: 7px;
+  background: var(--bg);
+}
+#close-btn {
+  background: var(--bg);
+  color: var(--amber);
+  border: 0;
+  font-family: var(--px);
+  font-size: 7px;
+  padding: 3px 7px;
+  cursor: pointer;
+  letter-spacing: 1px;
+}
+#close-btn:hover { background: #1e0e00; }
+#close-btn:active { transform: translate(1px,1px); }
+
+/* ─── IMAGE + CONTROLS WRAPPER ─── */
+#pager-display {
+  position: relative;
+  line-height: 0;
+  overflow: hidden;
+}
+
+#pager-img {
+  display: block;
+  height: 66vh;
+  width: auto;
+  max-width: 86vw;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+/* scanlines over pager image */
+#pager-display::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 3px,
+    rgba(0,0,0,0.18) 3px,
+    rgba(0,0,0,0.18) 4px
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+/* vignette */
+#pager-display::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    transparent 55%,
+    rgba(0,0,0,0.55) 100%
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ─── BUTTON OVERLAY (on image) ─── */
+#btn-overlay {
+  position: absolute;
+  bottom: 18px;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  z-index: 5;
+}
+
+.nav-btn, #rec-btn {
+  font-family: var(--px);
+  font-size: 8px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  text-transform: uppercase;
+  line-height: 1;
+  border: 2px solid var(--amber);
+  background: rgba(8,6,4,0.85);
+  color: var(--amber);
+  padding: 9px 13px;
+  border-top-color: var(--amber-light);
+  border-left-color: var(--amber-light);
+  border-bottom-color: var(--amber-dark);
+  border-right-color: var(--amber-dark);
+  box-shadow:
+    2px 2px 0 var(--amber-dark),
+    0 0 12px rgba(245,166,35,0.2);
+  transition: box-shadow 0.05s;
+}
+.nav-btn:hover, #rec-btn:hover {
+  box-shadow:
+    2px 2px 0 var(--amber-dark),
+    0 0 20px rgba(245,166,35,0.45),
+    0 0 6px var(--amber);
+}
+.nav-btn:active, #rec-btn:active {
+  border-top-color: var(--amber-dark);
+  border-left-color: var(--amber-dark);
+  border-bottom-color: var(--amber-light);
+  border-right-color: var(--amber-light);
+  transform: translate(2px,2px);
+  box-shadow: none;
+}
+
+#rec-btn {
+  padding: 9px 10px;
+  color: #ff4444;
+  border-color: #ff4444;
+  border-top-color: #ff8888;
+  border-left-color: #ff8888;
+  border-bottom-color: #8b0000;
+  border-right-color: #8b0000;
+  box-shadow:
+    2px 2px 0 #8b0000,
+    0 0 12px rgba(255,68,68,0.2);
+  text-shadow: 0 0 8px #ff4444;
+}
+#rec-btn:hover {
+  box-shadow:
+    2px 2px 0 #8b0000,
+    0 0 20px rgba(255,68,68,0.5),
+    0 0 6px #ff4444;
+}
+#rec-btn:active {
+  border-top-color: #8b0000;
+  border-left-color: #8b0000;
+  border-bottom-color: #ff8888;
+  border-right-color: #ff8888;
+}
+
+/* ─── MESSAGE TAB ─── */
+#message-tab {
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 8;
+  background: rgba(8,6,4,0.88);
+  border: 2px solid var(--amber);
+  padding: 18px 26px;
+  font-family: var(--px);
+  text-align: center;
+  white-space: nowrap;
+  box-shadow:
+    0 0 0 1px var(--amber-dark),
+    0 0 30px rgba(245,166,35,0.4);
+}
+#message-tab .msg-tag {
+  display: block;
+  font-size: 6px;
+  color: var(--amber-light);
+  letter-spacing: 3px;
+  border-bottom: 1px solid var(--amber-dark);
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+}
+#message-tab .msg-body {
+  display: block;
+  font-size: 9px;
+  color: var(--amber);
+  letter-spacing: 2px;
+  text-shadow: 0 0 12px var(--amber);
+  line-height: 2;
+}
+#message-tab .msg-time {
+  display: block;
+  font-size: 6px;
+  color: var(--amber-dark);
+  letter-spacing: 2px;
+  margin-top: 8px;
+}
+@keyframes tabIn {
+  0%   { opacity: 0; }
+  15%  { opacity: 1; }
+  20%  { opacity: 0.2; }
+  25%  { opacity: 1; }
+  100% { opacity: 1; }
+}
+
+/* ─── STATUS BAR ─── */
+#status-bar {
+  background: var(--screen-bg);
+  border-top: 2px solid var(--amber-dark);
+  padding: 5px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--px);
+}
+#status-bar .s-label {
+  font-size: 6px;
+  color: var(--amber-dark);
+  letter-spacing: 1px;
+}
+#page-counter {
+  font-size: 6px;
+  color: var(--amber);
+  letter-spacing: 2px;
+  text-shadow: 0 0 6px var(--amber-glow);
+}
+#signal-bar {
+  font-size: 6px;
+  color: var(--amber-dark);
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+.sig-block {
+  display: inline-block;
+  width: 5px;
+  background: var(--amber);
+}
+.sig-block:nth-child(1) { height: 4px; }
+.sig-block:nth-child(2) { height: 7px; }
+.sig-block:nth-child(3) { height: 10px; animation: sigBlink 1.6s step-end infinite; }
+
+@keyframes sigBlink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.2; }
+}
+
+</style>
+</head>
+<body>
+
+<!-- MAIN SCREEN -->
+<div id="main-screen">
+  <img id="main-img" src="mainscreen.png" alt="Computer Screen">
+
+  <button id="gallery-btn" onclick="openGallery()">
+    <span class="g-icon">📟</span>
+    GALLERY
+  </button>
+</div>
+
+<!-- MODAL BACKDROP -->
+<div id="modal-backdrop">
+  <div id="pager-window">
+
+    <!-- Title bar -->
+    <div id="title-bar">
+      <div class="title-left">
+        <div class="px-dots">
+          <div class="px-dot"></div>
+          <div class="px-dot"></div>
+          <div class="px-dot"></div>
+        </div>
+        <span>PAGER &nbsp;·&nbsp; MSG INBOX</span>
+      </div>
+      <button id="close-btn" onclick="closeGallery()">[ ESC ]</button>
+    </div>
+
+    <!-- Pager screen with overlaid controls -->
+    <div id="pager-display">
+      <img id="pager-img" src="5PAGES.png" alt="Pager Screen">
+
+      <!-- Message tab (appears on REC) -->
+      <div id="message-tab">
+        <span class="msg-tag">⬤ &nbsp; INCOMING PAGE &nbsp; ⬤</span>
+        <span class="msg-body">MESSAGE RECORDED</span>
+        <span class="msg-time" id="msg-time">——:——</span>
+      </div>
+
+      <!-- Button overlay on image -->
+      <div id="btn-overlay">
+        <button class="nav-btn" id="prev-btn" onclick="changePage(-1)">◀ PREV</button>
+        <button id="rec-btn" onclick="recordMessage()">⏺ REC</button>
+        <button class="nav-btn" id="next-btn" onclick="changePage(1)">NEXT ▶</button>
+      </div>
+    </div>
+
+    <!-- Status bar -->
+    <div id="status-bar">
+      <span class="s-label" id="file-label">5PAGES.PNG</span>
+      <span id="page-counter">01 / 06</span>
+      <span id="signal-bar">
+        SIG
+        <span class="sig-block"></span>
+        <span class="sig-block"></span>
+        <span class="sig-block"></span>
+      </span>
+    </div>
+
+  </div><!-- /pager-window -->
+</div><!-- /modal-backdrop -->
+
+<!-- Audio element (used as fallback pool seed) -->
+<audio id="snd-base" src="pagersoundeffect.wav" preload="auto"></audio>
+
+<script>
+/* ── Pages in required order ── */
+const PAGES = [
+  { file: '5PAGES.png',  label: '5PAGES.PNG'  },
+  { file: '0000.png',    label: '0000.PNG'     },
+  { file: '3535.png',    label: '3535.PNG'     },
+  { file: '9090.png',    label: '9090.PNG'     },
+  { file: '2626.png',    label: '2626.PNG'     },
+  { file: '012468.png',  label: '012468.PNG'   },
+];
+
+let current   = 0;
+let msgTimer  = null;
+
+/* Pre-decode the audio buffer for zero-latency beep */
+let audioCtx  = null;
+let beepBuf   = null;
+
+async function initAudio() {
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const res  = await fetch('pagersoundeffect.wav');
+    const arr  = await res.arrayBuffer();
+    beepBuf    = await audioCtx.decodeAudioData(arr);
+  } catch(e) {
+    /* fall back to HTML Audio below */
+  }
+}
+initAudio();
+
+function playBeep() {
+  if (audioCtx && beepBuf) {
+    /* Resume context if suspended (autoplay policy) */
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const src = audioCtx.createBufferSource();
+    src.buffer = beepBuf;
+    src.connect(audioCtx.destination);
+    src.start(0);
+    /* Stop after exactly 100 ms */
+    src.stop(audioCtx.currentTime + 0.1);
+  } else {
+    /* HTML Audio fallback */
+    const a = new Audio('pagersoundeffect.wav');
+    a.play().catch(() => {});
+    setTimeout(() => { try { a.pause(); } catch(e){} }, 100);
+  }
+}
+
+/* ── Display helpers ── */
+function updateDisplay() {
+  const p = PAGES[current];
+  document.getElementById('pager-img').src        = p.file;
+  document.getElementById('file-label').textContent = p.label;
+  document.getElementById('page-counter').textContent =
+    String(current + 1).padStart(2,'0') + ' / ' + String(PAGES.length).padStart(2,'0');
+}
+
+/* ── Gallery open / close ── */
+function openGallery() {
+  playBeep();
+  updateDisplay();
+  document.getElementById('modal-backdrop').classList.add('open');
+}
+
+function closeGallery() {
+  playBeep();
+  document.getElementById('modal-backdrop').classList.remove('open');
+}
+
+/* ── Page navigation ── */
+function changePage(dir) {
+  playBeep();
+  current = (current + dir + PAGES.length) % PAGES.length;
+  updateDisplay();
+}
+
+/* ── Record button ── */
+function recordMessage() {
+  playBeep();
+  /* Build timestamp string */
+  const now = new Date();
+  const hh  = String(now.getHours()).padStart(2,'0');
+  const mm  = String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('msg-time').textContent = hh + ':' + mm;
+
+  const tab = document.getElementById('message-tab');
+  tab.style.display = 'none';
+  void tab.offsetWidth;                    /* force reflow → restart animation */
+  tab.style.animation = 'none';
+  void tab.offsetWidth;
+  tab.style.animation = 'tabIn 0.4s ease forwards';
+  tab.style.display   = 'block';
+
+  if (msgTimer) clearTimeout(msgTimer);
+  msgTimer = setTimeout(() => {
+    tab.style.display = 'none';
+  }, 5000);
+}
+
+/* ── Dismiss on backdrop click ── */
+document.getElementById('modal-backdrop').addEventListener('click', function(e) {
+  if (e.target === this) closeGallery();
+});
+
+/* ── Keyboard shortcuts ── */
+document.addEventListener('keydown', function(e) {
+  const open = document.getElementById('modal-backdrop').classList.contains('open');
+  if (!open && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openGallery(); return; }
+  if (!open) return;
+  if (e.key === 'ArrowLeft')              changePage(-1);
+  else if (e.key === 'ArrowRight')        changePage(1);
+  else if (e.key === 'Escape')            closeGallery();
+  else if (e.key === 'r' || e.key === 'R') recordMessage();
+});
+</script>
+</body>
+</html>
